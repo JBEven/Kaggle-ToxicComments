@@ -2,39 +2,19 @@ import pandas as pd
 import re
 
 def getDataFrom(folderPath): # Getting train.csv and test.csv (into data frame) from given folder
-    if(type(folderPath) != type('truc')):
-        return null, null
     train = pd.read_csv(folderPath+'/train.csv')
     train_input = train[['comment_text']]
     rating_columns = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
     train_output = train[rating_columns]
     test = pd.read_csv(folderPath+'/test.csv')
-    return train_input, train_output, test
+    return train_input, train_output, test, pd.concat([train_input,test])
 
-def getFeatures(dataset,extra,word,char, wordPipe, charPipe,test=False): # extract from the dataset 'comment_text' column the features needed (given from boolean extra,word,char); tfidfWord and tfidfChar indicate if tfidf is preffered over bag of words.
-    if extra:
-        extra_feats  = getExtraFeatures(dataset)
-    else:
-        extra_feats = 0
-    if word:
-        if test:
-            word_feats = wordPipe.transform(dataset['comment_text'])
-        else:
-            word_feats = wordPipe.fit_transform(dataset['comment_text'])
-    else:
-        word_feats = 0
-    if char:
-        if test:
-            char_feats = charPipe.transform(dataset['comment_text'])
-        else:
-            char_feats = charPipe.fit_transform(dataset['comment_text'])
-    else:
-        char_feats = 0
-    return extra_feats, word_feats, char_feats, wordPipe, charPipe
+def getFeatures(dataset, wordPipe, charPipe): # extract from the dataset 'comment_text' column the features needed with word and char pipeline
+    extra_feats  = getExtraFeatures(dataset)
+    word_feats = wordPipe.transform(dataset['comment_text'])
+    char_feats = charPipe.transform(dataset['comment_text'])
+    return extra_feats, word_feats, char_feats
 
-def getTestFeatures(dataset,extra,word,char, wordPipe, charPipe):
-    return getFeatures(dataset,extra,word,char, wordPipe, charPipe, True)
-    
 def getExtraFeatures(dataset): # Getting extra features from 'comment_text' variable
     extrafeats = pd.DataFrame()
     
