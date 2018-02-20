@@ -8,30 +8,33 @@ def getDataFrom(folderPath): # Getting train.csv and test.csv (into data frame) 
     train_input = train[['comment_text']]
     rating_columns = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
     train_output = train[rating_columns]
-    test = pd.read_csv(folderPath+'/train.csv')
+    test = pd.read_csv(folderPath+'/test.csv')
     return train_input, train_output, test
 
-def getFeatures(dataset,extra,word,char, tfidfWord=False, tfidfChar=False): # extract from the dataset 'comment_text' column the features needed (given from boolean extra,word,char); tfidfWord and tfidfChar indicate if tfidf is preffered over bag of words.
+def getFeatures(dataset,extra,word,char, wordPipe, charPipe,test=False): # extract from the dataset 'comment_text' column the features needed (given from boolean extra,word,char); tfidfWord and tfidfChar indicate if tfidf is preffered over bag of words.
     if extra:
-        extraFeats = getExtraFeatures(dataset)
+        extra_feats  = getExtraFeatures(dataset)
     else:
-        extraFeats = 0
+        extra_feats = 0
     if word:
-        word_feats, wordPipe = getWordRepresentation(dataset,tfidfWord)
+        if test:
+            word_feats = wordPipe.transform(dataset['comment_text'])
+        else:
+            word_feats = wordPipe.fit_transform(dataset['comment_text'])
     else:
         word_feats = 0
     if char:
-        char_feats, charPipe = getCharRepresentation(dataset,tfidfChar)
+        if test:
+            char_feats = charPipe.transform(dataset['comment_text'])
+        else:
+            char_feats = charPipe.fit_transform(dataset['comment_text'])
     else:
         char_feats = 0
-    return extra, word_feats, char_feats, wordPipe, charPipe
+    return extra_feats, word_feats, char_feats, wordPipe, charPipe
 
-def getWordRepresentation(dataset,tfidfWord): #Get either bag of word or tfidf or dataset 'comment
-    pass
-
-def getCharRepresentation(dataset,tfidfChar):
-    pass
-
+def getTestFeatures(dataset,extra,word,char, wordPipe, charPipe):
+    return getFeatures(dataset,extra,word,char, wordPipe, charPipe, True)
+    
 def getExtraFeatures(dataset): # Getting extra features from 'comment_text' variable
     extrafeats = pd.DataFrame()
     
@@ -55,8 +58,4 @@ def getExtraFeatures(dataset): # Getting extra features from 'comment_text' vari
     extrafeats['parenthesis'] = dataset['comment_text'].map(lambda x:(x.count(')')+x.count('('))/len(x))
     extrafeats['hooks'] = dataset['comment_text'].map(lambda x:(x.count(']')+x.count('['))/len(x))
 
-    extra_features_list=['nb_char','nb_word','dot','exclamation','semi-colon','comma','question','double_dot','parenthesis','hooks']
-    # Cleaning special characters, lowering cases, punctuation and stopwords are dealt with sklearn
-    # We are left with some lemmatization to deal with
-
-    return extrafeats, extra_features_list
+    return extrafeats
